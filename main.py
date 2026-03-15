@@ -1,248 +1,156 @@
 import pandas as pd
-import numpy as np
+import os
 
-f=0
-n=0
-try:
-    inventario = pd.read_excel('Inventario.xlsx',sheet_name='Sheet1')
-    productos= (inventario["PRODUCTOS"]).values.tolist()
-    cantidad = (inventario["CANTIDAD"]).values.tolist()
-    precioC = (inventario["COSTO"]).values.tolist()
-    precioV = (inventario["PRECIO"]).values.tolist()
-    fecha = (inventario["FECHA DE INGRESO"]).values.tolist()
-    pro_lotes = pd.read_excel('Inventario.xlsx',sheet_name='Sheet2')
-    prod = pro_lotes["productos"].values.tolist()
-    pro = prod[0]
-    lotess = pro_lotes["lotes"].values.tolist()
-    lotes = lotess[0]
-    producto_disponible = pd.read_excel('Inventario.xlsx',sheet_name='Sheet3')
-    producto= (producto_disponible["nombres de los productos"].values.tolist())
-    cantidadtot = (producto_disponible["cantidades totales de los productos"]).values.tolist()
+productos=[]
+cantidad=[]
+precio_c=[]
+precio_v=[]
+fecha=[]
+lote=[]
+producto=[]
+cantidad_t=[]
 
-except FileNotFoundError:
-    productos = ["-"]
-    cantidad = [0]
-    precioC = ["Lote"]
-    precioV = ["Inicial"]
-    fecha = ["-"]
-    inventario = pd.DataFrame(
-        {"PRODUCTOS": productos, "CANTIDAD": cantidad, "COSTO": precioC, "PRECIO": precioV, "FECHA DE INGRESO": fecha})
-    producto = []
-    cantidadtot = []
-    lotes = 0
-    pro = 0
+def cargar_datos():
+    global productos,cantidad,precio_c,precio_v,fecha,lote,producto,cantidad_t
+    if os.path.exists('Inventario.xlsx'):
+        inventario=pd.read_excel('Inventario.xlsx',sheet_name='Sheet1')
+        productos=inventario["PRODUCTOS"].values.tolist()
+        cantidad=inventario["CANTIDAD"].values.tolist()
+        precio_c=inventario["COSTO"].values.tolist()
+        precio_v=inventario["PRECIO"].values.tolist()
+        fecha=inventario["FECHA DE INGRESO"].values.tolist()
+        lote=inventario["LOTE"].values.tolist()
 
+        p_disponible=pd.read_excel('Inventario.xlsx',sheet_name='Sheet2')
+        producto=p_disponible["Nombre de los productos"].values.tolist()
+        cantidad_t=p_disponible["Cantidad total de los productos"].values.tolist()
 
-while f==0:
-    print("1) Revisar Inventario")
-    print("2) Añadir Productos")
-    print("3) Compra de Unidades")
-    print("4) Venta de Unidades")
-    print("5) Cambios a los Productos")
-    print("6) Salir del Programa")
-    option = input("Ingrese el Numero de la Opcion: ")
+def guardar_excel():
+    inventario=pd.DataFrame({"PRODUCTOS":productos,"CANTIDAD":cantidad,"COSTO":precio_c,"PRECIO":precio_v,"FECHA DE INGRESO":fecha,"LOTE":lote})
+    p_disponible=pd.DataFrame({"Nombre de los productos":producto,"Cantidad total de los productos":cantidad_t})
+    with pd.ExcelWriter('Inventario.xlsx',engine='xlsxwriter') as writer:
+        inventario.to_excel(writer,sheet_name='Sheet1',index=False)
+        p_disponible.to_excel(writer,sheet_name='Sheet2',index=False)
 
-    if option == "1":
-        print("===Revisar Inventario===")
-        if pro==0:
-            print("no hay inventario")
-            print("presione enter para continuar")
-            input()
+cargar_datos()
+
+while True:
+    print("\n\t.:MENÚ PRINCIPAL:.")
+    print("1.Revisar Inventario\n2.Compra de Unidades (Lotes)\n3.Venta de Unidades\n4.Añadir Productos\n5.Salir del Programa")
+    opcion=int(input("Ingrese el número de la acción a realizar: "))
+
+    if opcion==1:
+        print("\n\t----Revisar Inventario----")
+        if not productos:
+            print("El inventario está vacío")
         else:
-            print(inventario)
+            print(pd.DataFrame({"PRODUCTOS":productos,"CANTIDAD":cantidad,"COSTO":precio_c,"PRECIO":precio_v,"FECHA DE INGRESO":fecha,"LOTE":lote}))
+        print("\nPresione Enter para volver al Menú Principal")
+        input()
 
-    elif option == "2":
-        print("===Añadir Productos===")
-        print("1) añadir productos")
-        print("2) Volver al Menu Principal")
-        option2 = input("Ingrese el Numero de la Opcion: ")
-        if option2 == "1":
-            print("===añadir productos===")
-            nombre = input("Ingrese el Nombre del Producto: ")
+    elif opcion==2:
+        print("\n\t----COMPRA DE UNIDADES----")
+        if not productos:
+            print("Debe añadir productos primero")
+        else:
+            print("1.Ingresar un lote\n2.Volver al Menú Principal")
+            opcion2=int(input("Ingrese el número de la opción: "))
+            if opcion2==1:
+                for i in range(len(producto)):
+                    print(f"\n{i}.{producto[i]}")
+                ind=int(input("\nIngrese el número del producto al que pertenece este lote: "))
+                if 0<=ind<len(producto):
+                    nombre_p=producto[ind]
+                    nlotes=len(lote)+1
+                    fechai=str(input("Fecha de ingreso del lote: "))
+                    ingreso=int(input(f"Cantidad ingresada de {nombre_p}: "))
+
+                    cantidad.append(ingreso)
+                    cantidad_t[ind]+=ingreso
+                    productos.append(nombre_p)
+                    precio_c.append(float(input("Ingrese el costo: ")))
+                    precio_v.append(float(input("Ingrese el precio de venta: ")))
+                    fecha.append(fechai)
+                    lote.append(f"N.{nlotes}")
+
+                    guardar_excel()
+                    print(f"\nLote N.{nlotes} {nombre_p} registrado con éxito.")
+                else:
+                    print("Número de producto inválido.")
+            elif opcion2==2:
+                print()
+            else:
+                print("Opción inválida")
+        print("\nPresione Enter para volver al Menú Principal")
+        input()
+
+    elif opcion==3:
+        print("\n\t----Venta de Unidades----")
+        if not productos:
+            print("El inventario está vacío")
+        else:
+            print("1.Registrar una venta\n2.Volver al menú principal")
+            opcion3=int(input("Ingrese el número de la opción: "))
+            if opcion3==1:
+                print("\n\t--PRODUCTOS DISPONIBLES--")
+                print(pd.DataFrame({"Nombre de los productos":producto,"Cantidad total de los productos":cantidad_t}))
+                n_venta=int(input("Ingrese el número del producto: "))
+                venta_unidad=int(input("Ingrese el número de unidades a vender: "))
+                if venta_unidad>cantidad_t[n_venta]:
+                    print("La cantidad que intentas vender es más grande que tu inventario")
+                else:
+                    vendido=producto[n_venta]
+                    venta_og=venta_unidad
+                    for i in range(len(productos)):
+                        if productos[i]==vendido:
+                            if cantidad[i]>0:
+                                if cantidad[i]<venta_unidad:
+                                    venta_unidad-=cantidad[i]
+                                    cantidad[i]=0
+                                else:
+                                    cantidad[i]-=venta_unidad
+                                    venta_unidad=0
+                    cantidad_t[n_venta]-=venta_og
+                guardar_excel()
+                print("¡Venta realizada con éxito!")
+
+            elif opcion3==2:
+                print()
+            else:
+                print("Opción inválida")
+        print("\nPresione Enter para volver al Menú Principal")
+        input()
+
+    elif opcion==4:
+        print("\n\t----Añadir Productos----")
+        print("1.Añadir un producto\n2.Volver al menú principal")
+        opcion4=int(input("Ingrese el número de la opción: "))
+        if opcion4==1:
+            nombre=input("Ingrese el nombre del producto: ")
             productos.append(nombre)
             producto.append(nombre)
-            cuanto = int(input("Ingrese la cantidad inicial: "))
+            cuanto=int(input("Ingrese la cantidad inicial: "))
             cantidad.append(cuanto)
-            cantidadtot.append(cuanto)
-            costo = input("Ingrese el costo unitario: ")
-            precioC.append(costo)
-            PrecioFinal = input("Ingrese el precio Final del Producto: ")
-            precioV.append(PrecioFinal)
-            fechaI = input("Ingrese la Fecha de Ingreso: ")
-            fecha.append(fechaI)
-            inventario = pd.DataFrame(
-                {"PRODUCTOS": productos , "CANTIDAD": cantidad , "COSTO": precioC, "PRECIO": precioV ,
-                 "FECHA DE INGRESO": fecha })
-            pro += 1
+            cantidad_t.append(cuanto)
+            precio_c.append(input("Ingrese el costo unitario: "))
+            precio_v.append(input("Ingrese el precio de venta unitario: "))
+            fecha.append(input("Fecha de ingreso: "))
+            nlotes=len(lote)+1
+            lote.append(f"N.{nlotes}")
 
-        if option2=="2" :
-            print("Volviendo al Menu Principal...")
+            guardar_excel()
+            print("\n¡Producto añadido correctamente!")
+
+        elif opcion4==2:
+            print()
         else:
-            print("opcion invalida")
+            print("Opción inválida")
+        print("\nPresione Enter para volver al Menú Principal")
+        input()
 
-    elif option == "3":
-        if pro == 0:
-            print("no hay inventario")
-        else:
-            print("===INGRESO DE LOTES===")
-            print("Desea Ingresar un Lote?")
-            print("1)si")
-            print("2)No")
-            option3 = input("Ingrese el Numero de la Opcion: ")
-            if option3 == "1":
-                lotes+=1
-                productos.append("-")
-                cantidad.append(0)
-                precioC.append("Lote ")
-                precioV.append(f"N.{lotes}")
-                fecha.append("-")
-                fechai = input("Ingrese la fecha de ingreso de el lote")
-                for i in range(0,pro,1):
-                    productos.append(producto[i])
-                    ingreso = int(input("ingrese la cantidad: "))
-                    cantidad.append(ingreso)
-                    cantidadtot[i]=cantidadtot[i]+ingreso
-                    precioC.append(input("ingrese el costo : "))
-                    precioV.append(input("ingrese el precio : "))
-                    fecha.append(fechai)
-                    inventario = pd.DataFrame(
-                        {"PRODUCTOS": productos , "CANTIDAD": cantidad , "COSTO": precioC ,
-                         "PRECIO": precioV ,
-                         "FECHA DE INGRESO": fecha})
-
-
-            elif option3 == "2":
-                print("Presione Enter para Volver al Menu")
-                input()
-            else:
-                print("Opcion invalida")
-
-    elif option == "4":
-        if pro == 0:
-            print("no hay inventario")
-        else:
-            print("===Venta de Unidades===")
-            print("Desea Vender Unidades de un Producto?")
-            print("1)si")
-            print("2)No")
-            option4 = int(input("Ingrese el Numero de la Opcion: "))
-            if option4 == 1:
-                v=0
-                bool = []
-                print("=PRODUCTOS DISPONIBLES=")
-                producto_dispobibles = pd.DataFrame({"Productos":producto,"Cantidad Total":cantidadtot})
-                print(producto_dispobibles)
-                Nventa = int(input("Ingrese el numero del producto: "))
-                vendido = producto[Nventa]
-                venta_unidad = int(input("Ingrese el numero de unidades para la venta: "))
-                if venta_unidad > cantidadtot[Nventa]:
-                    print("La cantidad que intentas vender es mas grande que tu inventario")
-                else:
-                    for prod in productos:
-                        if prod == vendido:
-                            bol = True
-                            bool.append(bol)
-                        else:
-                            bol = False
-                            bool.append(bol)
-                    for bolean in bool:
-                        if bolean == True:
-                            if cantidad[v] < venta_unidad:
-                                venta_unidad = venta_unidad - cantidad[v]
-                                cantidad[v] = 0
-                            else:
-                                cantidad[v] = cantidad[v] - venta_unidad
-                        if bolean == False:
-                            print("")
-                        v += 1
-                    inventario = pd.DataFrame(
-                        {"PRODUCTOS": productos, "CANTIDAD": cantidad, "COSTO": precioC, "PRECIO": precioV,
-                         "FECHA DE INGRESO": fecha})
-
-            elif option4 == 2:
-                print("Presione Cualquier Tecla para Volver al Menu")
-                input()
-            else:
-                print("Opcion invalida")
-
-    elif option == "5":
-        if pro == 0:
-            print("no hay inventario")
-        else:
-            print("===Cambios a los Productos===")
-            print("1) Modificar los Nombres")
-            print("2) Modificar el Costo de los productos")
-            print("3) Modificar Precio de Venta")
-            print("4) Modificar Fecha de Ingreso")
-            print("5) Salir al Menu Principal")
-            option5 = input("Ingrese el Numero de la Opcion: ")
-            if option5 == "1":
-                v = 0
-                bool = []
-                print(pd.DataFrame({"PRODUCTOS REGISTRADOS":producto}))
-                nprod = int(input("Ingrese el numero del producto: "))
-                prod_reemplazado = producto[nprod]
-                Nnombre = input("Ingrese el nombre nuevo del producto: ")
-                for prod in productos:
-                    if prod == prod_reemplazado:
-                        bol = True
-                        bool.append(bol)
-                    else:
-                        bol = False
-                        bool.append(bol)
-                for bolean in bool:
-                    if bolean == True:
-                        productos[v] = Nnombre
-                    if bolean == False:
-                        print("")
-                    v+=1
-                inventario = pd.DataFrame(
-                            {"PRODUCTOS": productos, "CANTIDAD": cantidad, "COSTO": precioC, "PRECIO": precioV,
-                             "FECHA DE INGRESO": fecha})
-            elif option5 == "2":
-                bool = []
-                print(inventario)
-                ncosto = int(input("Ingrese el numero del producto: "))
-                precioC[ncosto] = input("Ingrese el costo nuevo del producto: ")
-                inventario = pd.DataFrame(
-                    {"PRODUCTOS": productos, "CANTIDAD": cantidad, "COSTO": precioC, "PRECIO": precioV,
-                     "FECHA DE INGRESO": fecha})
-            elif option5 == "3":
-                bool = []
-                print(inventario)
-                nprecio = int(input("Ingrese el numero del producto: "))
-                precioV[nprecio] = input("Ingrese el precio nuevo del producto: ")
-                inventario = pd.DataFrame(
-                    {"PRODUCTOS": productos, "CANTIDAD": cantidad, "COSTO": precioC, "PRECIO": precioV,
-                     "FECHA DE INGRESO": fecha})
-            elif option5 == "4":
-                bool = []
-                print(inventario)
-                nfecha = int(input("Ingrese el numero del producto: "))
-                fecha[nfecha] = input("Ingrese la nueva fecha del producto: ")
-                inventario = pd.DataFrame(
-                    {"PRODUCTOS": productos, "CANTIDAD": cantidad, "COSTO": precioC, "PRECIO": precioV,
-                     "FECHA DE INGRESO": fecha})
-            elif option5 == "5":
-                print("Presione Cualquier Tecla para Volver al Menu")
-                input()
-            else:
-                print("Opcion invalida")
-
-    elif option == "6":
+    elif opcion==5:
+        print("¡Gracias por usar el sistema!")
         break
     else:
-        print("Opcion invalida")
-
-datos_importantes = pd.DataFrame({"productos":pro,"lotes":lotes},index=[0])
-datos_importantes3 = pd.DataFrame({"nombres de los productos":producto,"cantidades totales de los productos":cantidadtot})
-nombre_archivo = 'Inventario.xlsx'
-
-try:
-    with pd.ExcelWriter(nombre_archivo, engine='xlsxwriter') as writer:
-
-        inventario.to_excel(writer, sheet_name='Sheet1', index=False)
-        datos_importantes.to_excel(writer, sheet_name='Sheet2', index=False,header=True)
-        datos_importantes3.to_excel(writer, sheet_name='Sheet3', index=False, header=True)
-except Exception as e:
-    print("Ocurrió un error al guardar el archivo, intente de nuevo su operacion")
+        print("Opción inválida")
+        break
