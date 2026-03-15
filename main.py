@@ -26,7 +26,8 @@ def cargar_datos():
         cantidad_t=p_disponible["Cantidad total de los productos"].values.tolist()
 
 def guardar_excel():
-    inventario=pd.DataFrame({"PRODUCTOS":productos,"CANTIDAD":cantidad,"COSTO":precio_c,"PRECIO":precio_v,"FECHA DE INGRESO":fecha,"LOTE":lote})
+    inventario=pd.DataFrame({"PRODUCTOS":productos,"CANTIDAD":cantidad,"COSTO":precio_c,"PRECIO":precio_v,
+                             "FECHA DE INGRESO":fecha,"LOTE":lote})
     p_disponible=pd.DataFrame({"Nombre de los productos":producto,"Cantidad total de los productos":cantidad_t})
     with pd.ExcelWriter('Inventario.xlsx',engine='xlsxwriter') as writer:
         inventario.to_excel(writer,sheet_name='Sheet1',index=False)
@@ -44,7 +45,8 @@ while True:
         if not productos:
             print("El inventario está vacío")
         else:
-            print(pd.DataFrame({"PRODUCTOS":productos,"CANTIDAD":cantidad,"COSTO":precio_c,"PRECIO":precio_v,"FECHA DE INGRESO":fecha,"LOTE":lote}))
+            print(pd.DataFrame({"PRODUCTOS":productos,"CANTIDAD":cantidad,"COSTO":precio_c,"PRECIO":precio_v,
+                                "FECHA DE INGRESO":fecha,"LOTE":lote}))
         print("\nPresione Enter para volver al Menú Principal")
         input()
 
