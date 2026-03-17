@@ -57,7 +57,7 @@ def mostrar_inventario():
             "FECHA DE INGRESO": fecha,
             "LOTE": lote
         })
-        print(df)
+        print(df.to_string(index=False))
 
 def recalcular_totales():
     global producto, cantidad_t
@@ -248,7 +248,7 @@ while True:
                     print("Debe ingresar valores numéricos válidos.")
                     continue
 
-                fechai = input("Fecha de ingreso: ")
+                fechai = input("Fecha (DD/MM/AAAA) de ingreso: ")
                 nlotes = len(lote) + 1
 
                 productos.append(nombre)
@@ -381,3 +381,4 @@ while True:
 
     else:
         print("Opción inválida")
+
